@@ -30,7 +30,7 @@ class MainMenu: SKScene {
         if node.name == "play" {
             let scene = GameScene(size: size)
             scene.scaleMode = scaleMode
-            view!.presentScene(scene, transition: .doorsOpenVertical(withDuration: 0.3))
+            view!.presentScene(scene, transition: .flipHorizontal(withDuration: 0.5))
         } else if node.name == "highscore" {
             setupPanel()
         } else if node.name == "setting" {
