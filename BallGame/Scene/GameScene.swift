@@ -19,6 +19,8 @@ class GameScene: SKScene {
     var cameraNode = SKCameraNode()
     var obstacles: [SKSpriteNode] = []
     var coin: SKSpriteNode!
+    var particles: SKEmitterNode!
+    var trail: SKEmitterNode!
     
     var cameraMovePointPerSecond: CGFloat = 450.0
     var lastUpdateTime: TimeInterval = 0.0
@@ -117,7 +119,6 @@ class GameScene: SKScene {
         }
         lastUpdateTime = currentTime
         moveCamera()
-        moveBackGround()
         movePlayer()
         velocityY += gravity
         player.position.y -= velocityY
@@ -135,7 +136,6 @@ class GameScene: SKScene {
             player.physicsBody?.velocity.dx -= 0.1
         }
         
-        print(ground.size)
         
         
         if gameOver {
@@ -143,7 +143,13 @@ class GameScene: SKScene {
             scene.scaleMode = scaleMode
             view!.presentScene(scene, transition: .crossFade(withDuration: 0.8))
         }
-        
+        print(trail.position.y)
+        moveTrail()
+        if !onGround {
+            trail.particleLifetime = 0
+        } else {
+            trail.particleLifetime = 1
+        }
         boundCheckPlayer()
     }
 }
@@ -181,11 +187,18 @@ extension GameScene {
             bg.anchorPoint = .zero
             bg.position = CGPoint(x: bg.size.width*CGFloat(i) * CGFloat(1*i), y: 0.0)
             bg.zPosition = -1.0
+            particles = SKEmitterNode(fileNamed: "Snow")
+            particles.position.x = cameraNode.position.x
+            particles.position.y = 1500.0
+            particles.zPosition = 50.0
+            particles.targetNode = bg
             addChild(bg)
+            bg.addChild(particles)
             let moveLeft = SKAction.moveBy(x: -bg.size.width , y: 0, duration: 90)
             let moveReset = SKAction.moveBy(x: bg.size.width - 2048.0 , y: 0, duration: 0)
             let moveLoop = SKAction.sequence([moveLeft, moveReset])
             let moveForever = SKAction.repeatForever(moveLoop)
+            backGround = bg
             bg.run(moveForever)
        }
         
@@ -226,6 +239,12 @@ extension GameScene {
         player.physicsBody!.contactTestBitMask = PhysicsCategory.Block | PhysicsCategory.Obstacle | PhysicsCategory.Coin
         playerPosY = player.position.y
         addChild(player)
+        trail = SKEmitterNode(fileNamed: "Trail")
+        trail.position.x = player.position.x
+        trail.position.y = ground.position.y + 327.0
+        trail.zPosition = player.zPosition - 1.0
+        //trail.targetNode = player
+        addChild(trail)
     }
     
     func setupCamera() {
@@ -263,16 +282,9 @@ extension GameScene {
     
     func movePlayer() {
         let amountToMove = cameraMovePointPerSecond*CGFloat(dt)
-//        let rotate = CGFloat(1).degreeToRadians() * amountToMove/2.5
         let rotate = CGFloat(2).degreeToRadians() * amountToMove/2.5
         player.zRotation -= rotate
         player.position.x += amountToMove
-    }
-    
-    func moveBackGround() {
-//        let amountToMove = cameraMovePointPerSecond*CGFloat(dt)
-//        backGround.position.x += amountToMove
- //       backGround.position.x =  cameraNode.position.x
     }
     
     func setupObstacles() {
@@ -300,7 +312,7 @@ extension GameScene {
         
         if(sprite.name == "Block") {
             sprite.physicsBody!.categoryBitMask = PhysicsCategory.Block
-            sprite.physicsBody!.collisionBitMask = PhysicsCategory.Player | PhysicsCategory.Ground
+            sprite.physicsBody!.collisionBitMask = PhysicsCategory.Player | PhysicsCategory.Ground | PhysicsCategory.Block
         } else {
             sprite.physicsBody!.isDynamic = false
             sprite.physicsBody!.categoryBitMask = PhysicsCategory.Obstacle
@@ -459,6 +471,10 @@ extension GameScene {
             scoreLabel.text = "\(numScore)"
             gameOver = true
         }
+    }
+    
+    func moveTrail() {
+        trail.position.x = player.position.x
     }
     
     func setupGameOver() {

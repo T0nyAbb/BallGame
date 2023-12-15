@@ -30,7 +30,7 @@ class MainMenu: SKScene {
         if node.name == "play" {
             let scene = GameScene(size: size)
             scene.scaleMode = scaleMode
-            view!.presentScene(scene, transition: .flipHorizontal(withDuration: 0.5))
+            view!.presentScene(scene, transition: .fade(withDuration: 0.8))
         } else if node.name == "highscore" {
             setupPanel()
         } else if node.name == "setting" {
@@ -64,7 +64,7 @@ class MainMenu: SKScene {
 extension MainMenu {
     
     func setupBG() {
-        let bgNode = SKSpriteNode(imageNamed: "background")
+        let bgNode = SKSpriteNode(imageNamed: "fbgr")
         bgNode.zPosition = -1.0
         bgNode.anchorPoint = .zero
         bgNode.position = .zero
@@ -73,7 +73,7 @@ extension MainMenu {
     
     func setupGround() {
         for i in 0...2 {
-            let groundNode = SKSpriteNode(imageNamed: "ground")
+            let groundNode = SKSpriteNode(imageNamed: "Snow")
             groundNode.name = "Ground"
             groundNode.anchorPoint = .zero
             groundNode.zPosition = 1.0

@@ -23,6 +23,14 @@ class GameOver: SKScene {
         ]))
     }
     
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesBegan(touches, with: event)
+        guard let touch = touches.first else { return }
+        let scene = MainMenu(size: self.size)
+        scene.scaleMode = self.scaleMode
+        self.view!.presentScene(scene, transition: .crossFade(withDuration: 0.5))
+    }
+    
     override func update(_ currentTime: TimeInterval) {
         moveNodes()
     }
@@ -33,7 +41,7 @@ extension GameOver {
     
     func createBGNodes() {
         for i in 0...2 {
-            let bgNode = SKSpriteNode(imageNamed: "background")
+            let bgNode = SKSpriteNode(imageNamed: "fbgr")
             bgNode.name = "Background"
             bgNode.zPosition = -1.0
             bgNode.anchorPoint = .zero
@@ -44,7 +52,7 @@ extension GameOver {
     
     func createGroundNodes() {
         for i in 0...2 {
-            let groundNode = SKSpriteNode(imageNamed: "ground")
+            let groundNode = SKSpriteNode(imageNamed: "Snow")
             groundNode.name = "Ground"
             groundNode.anchorPoint = .zero
             groundNode.zPosition = 1.0
