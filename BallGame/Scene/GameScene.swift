@@ -23,6 +23,7 @@ class GameScene: SKScene {
     var particles: SKEmitterNode!
     var snowGround: SKEmitterNode!
     var trail: SKEmitterNode!
+    var santaTexture: [SKTexture] = []
     
     var cameraMovePointPerSecond: CGFloat = 450.0
     var lastUpdateTime: TimeInterval = 0.0
@@ -149,13 +150,7 @@ class GameScene: SKScene {
         } else {
             trail.particleLifetime = 1
         }
-        if santa != nil {
-            moveSanta()
-            if (cameraNode.position.x - santa.position.x) > 1400.0 {
-                santa.removeFromParent()
-                soundSanta.removeFromParent()
-            }
-        }
+        moveSanta()
         boundCheckPlayer()
     }
 }
@@ -174,7 +169,7 @@ extension GameScene {
             self.setupCoin()
             self.spawnCoin()
         }
-        
+        loadSantaTextures()
         DispatchQueue.main.asyncAfter(deadline: .now() + 30.0) {
             self.setupSanta()
             self.spawnSanta()
@@ -405,8 +400,8 @@ extension GameScene {
         santa = SKSpriteNode(imageNamed: "001")
         santa.name = "santa"
         santa.zPosition = 10.0
-        santa.setScale(0.25)
-        santa.position = CGPoint(x: cameraRect.maxX + santa.frame.width, y: size.height - santa.size.height/1.2)
+        santa.setScale(0.8)
+        santa.position = CGPoint(x: cameraRect.maxX + santa.frame.width, y: size.height - santa.frame.height)
         santa.physicsBody = SKPhysicsBody(rectangleOf: santa.size)
         santa.physicsBody!.affectedByGravity = false
         santa.physicsBody!.isDynamic = true
@@ -418,16 +413,7 @@ extension GameScene {
         addChild(santa)
         soundSanta.autoplayLooped = true
         addChild(soundSanta)
-        santa.run(.sequence([
-            .wait(forDuration: 20.0),
-            .removeFromParent()
-        ]))
-        
-        var textures: [SKTexture] = []
-        for i in 3...9 {
-            textures.append(SKTexture(imageNamed: "00\(i)"))
-        }
-        santa.run(.repeatForever(.animate(with: textures, timePerFrame: 0.169)))
+        santa.run(.repeatForever(.animate(with: santaTexture, timePerFrame: 0.169)))
     }
     
     func spawnSanta() {
@@ -440,9 +426,21 @@ extension GameScene {
         ])))
     }
     
+    func loadSantaTextures() {
+        for i in 3...9 {
+            santaTexture.append(SKTexture(imageNamed: "00\(i)"))
+        }
+    }
+    
     func moveSanta() {
-        let amountToMove = cameraMovePointPerSecond*CGFloat(dt)
-        santa.position.x -= amountToMove/4
+        if santa != nil {
+            let amountToMove = cameraMovePointPerSecond*CGFloat(dt)
+            santa.position.x -= amountToMove/4
+            if (cameraNode.position.x - santa.position.x) > 1400.0 {
+                santa.removeFromParent()
+                soundSanta.removeFromParent()
+            }
+        }
     }
     
     func setupLife() {
