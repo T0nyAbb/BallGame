@@ -19,7 +19,9 @@ class GameScene: SKScene {
     var cameraNode = SKCameraNode()
     var obstacles: [SKSpriteNode] = []
     var coin: SKSpriteNode!
+    var santa: SKSpriteNode!
     var particles: SKEmitterNode!
+    var snowGround: SKEmitterNode!
     var trail: SKEmitterNode!
     
     var cameraMovePointPerSecond: CGFloat = 450.0
@@ -37,15 +39,17 @@ class GameScene: SKScene {
     var life: Int = 3
     
     var lifeNodes: [SKSpriteNode] = []
-    var scoreLabel = SKLabelNode(fontNamed: "Krungthep")
+    var scoreLabel = SKLabelNode(fontNamed: "PWHappyChristmas.tff")
     var coinIcon: SKSpriteNode!
     
     var pauseNode: SKSpriteNode!
     var containerNode = SKNode()
     
+    var soundSanta = SKAudioNode(fileNamed: "santa.mp3")
     var soundCoin = SKAction.playSoundFileNamed("coin.mp3")
     var soundJump = SKAction.playSoundFileNamed("jump.wav")
     var soundCollision = SKAction.playSoundFileNamed("collision.wav")
+    var soundDamage = SKAction.playSoundFileNamed("damage.mp3")
     
     var playableRect: CGRect {
         let ratio: CGFloat
@@ -78,8 +82,6 @@ class GameScene: SKScene {
         super.touchesBegan(touches, with: event)
         guard let touch = touches.first else { return }
         let node = atPoint(touch.location(in: self))
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
         if node.name == "Pause" {
             if isPaused { return }
             createPanel()
@@ -136,19 +138,23 @@ class GameScene: SKScene {
             player.physicsBody?.velocity.dx -= 0.1
         }
         
-        
-        
         if gameOver {
             let scene = GameOver(size: size)
             scene.scaleMode = scaleMode
             view!.presentScene(scene, transition: .crossFade(withDuration: 0.8))
         }
-        print(trail.position.y)
         moveTrail()
         if !onGround {
             trail.particleLifetime = 0
         } else {
             trail.particleLifetime = 1
+        }
+        if santa != nil {
+            moveSanta()
+            if (cameraNode.position.x - santa.position.x) > 1400.0 {
+                santa.removeFromParent()
+                soundSanta.removeFromParent()
+            }
         }
         boundCheckPlayer()
     }
@@ -168,12 +174,16 @@ extension GameScene {
             self.setupCoin()
             self.spawnCoin()
         }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30.0) {
+            self.setupSanta()
+            self.spawnSanta()
+        }
         setupPhysics()
         setupLife()
         setupScore()
         setupPause()
         setupCamera()
-        view!.showsPhysics = true
     }
     
     func setupPhysics() {
@@ -195,7 +205,7 @@ extension GameScene {
             addChild(bg)
             bg.addChild(particles)
             let moveLeft = SKAction.moveBy(x: -bg.size.width , y: 0, duration: 90)
-            let moveReset = SKAction.moveBy(x: bg.size.width - 2048.0 , y: 0, duration: 0)
+            let moveReset = SKAction.moveBy(x: bg.size.width - 2049.0 , y: 0, duration: 0)
             let moveLoop = SKAction.sequence([moveLeft, moveReset])
             let moveForever = SKAction.repeatForever(moveLoop)
             backGround = bg
@@ -211,6 +221,11 @@ extension GameScene {
             ground.anchorPoint = .zero
             ground.zPosition = 1.0
             ground.position = CGPoint(x: CGFloat(i)*ground.frame.width, y: 0.0)
+            snowGround = SKEmitterNode(fileNamed: "Snow")
+            snowGround.position.x = cameraNode.position.x
+            snowGround.position.y = playableRect.height
+            snowGround.zPosition = -65.0
+            snowGround.targetNode = ground
             let gsize: CGSize = CGSize(width: 8192, height: 334)
             ground.physicsBody = SKPhysicsBody(rectangleOf: gsize,
                                                center: CGPoint(x: ground.position.x, y: ground.position.y+162))
@@ -221,6 +236,7 @@ extension GameScene {
             ground.physicsBody!.collisionBitMask = PhysicsCategory.Player | PhysicsCategory.Block | PhysicsCategory.Obstacle
             self.ground = ground
             addChild(ground)
+            ground.addChild(snowGround)
         }
        
     }
@@ -241,9 +257,9 @@ extension GameScene {
         addChild(player)
         trail = SKEmitterNode(fileNamed: "Trail")
         trail.position.x = player.position.x
-        trail.position.y = ground.position.y + 327.0
+        trail.position.y = ground.position.y + 325.0
         trail.zPosition = player.zPosition - 1.0
-        //trail.targetNode = player
+        trail.speed = cameraMovePointPerSecond
         addChild(trail)
     }
     
@@ -312,7 +328,7 @@ extension GameScene {
         
         if(sprite.name == "Block") {
             sprite.physicsBody!.categoryBitMask = PhysicsCategory.Block
-            sprite.physicsBody!.collisionBitMask = PhysicsCategory.Player | PhysicsCategory.Ground | PhysicsCategory.Block
+            sprite.physicsBody!.collisionBitMask = PhysicsCategory.Player | PhysicsCategory.Ground | PhysicsCategory.Block | PhysicsCategory.Obstacle
         } else {
             sprite.physicsBody!.isDynamic = false
             sprite.physicsBody!.categoryBitMask = PhysicsCategory.Obstacle
@@ -385,6 +401,50 @@ extension GameScene {
         ])))
     }
     
+    func setupSanta() {
+        santa = SKSpriteNode(imageNamed: "001")
+        santa.name = "santa"
+        santa.zPosition = 10.0
+        santa.setScale(0.25)
+        santa.position = CGPoint(x: cameraRect.maxX + santa.frame.width, y: size.height - santa.size.height/1.2)
+        santa.physicsBody = SKPhysicsBody(rectangleOf: santa.size)
+        santa.physicsBody!.affectedByGravity = false
+        santa.physicsBody!.isDynamic = true
+        santa.physicsBody!.density = 4.0
+        santa.physicsBody!.categoryBitMask = PhysicsCategory.Santa
+        santa.physicsBody!.contactTestBitMask = PhysicsCategory.Player
+        santa.physicsBody!.collisionBitMask = PhysicsCategory.Player
+        
+        addChild(santa)
+        soundSanta.autoplayLooped = true
+        addChild(soundSanta)
+        santa.run(.sequence([
+            .wait(forDuration: 20.0),
+            .removeFromParent()
+        ]))
+        
+        var textures: [SKTexture] = []
+        for i in 3...9 {
+            textures.append(SKTexture(imageNamed: "00\(i)"))
+        }
+        santa.run(.repeatForever(.animate(with: textures, timePerFrame: 0.169)))
+    }
+    
+    func spawnSanta() {
+        let random = CGFloat.random(min: 30.0, max: 45.0)
+        run(.repeatForever(.sequence([
+            .wait(forDuration: TimeInterval(random)),
+            .run { [weak self] in
+                self?.setupSanta()
+            }
+        ])))
+    }
+    
+    func moveSanta() {
+        let amountToMove = cameraMovePointPerSecond*CGFloat(dt)
+        santa.position.x -= amountToMove/4
+    }
+    
     func setupLife() {
         let node1 = SKSpriteNode(imageNamed: "life-on")
         let node2 = SKSpriteNode(imageNamed: "life-on")
@@ -418,18 +478,20 @@ extension GameScene {
         
         //Label
         scoreLabel.text = "\(numScore)"
+        scoreLabel.fontName = "PWJoyeuxNoel"
         scoreLabel.fontSize = 60.0
+        scoreLabel.fontColor = .black
         scoreLabel.horizontalAlignmentMode = .left
         scoreLabel.verticalAlignmentMode = .top
         scoreLabel.zPosition = 50.0
         scoreLabel.position = CGPoint(x: -playableRect.width/2.0 + coinIcon.frame.width*2.0 + 20,
-                                      y: coinIcon.position.y + coinIcon.frame.height/2.0 - 10.0)
+                                      y: coinIcon.position.y + coinIcon.frame.height/2.0 - 5.0)
         cameraNode.addChild(scoreLabel)
     }
     
     func setupPause() {
         pauseNode = SKSpriteNode(imageNamed: "pause")
-        pauseNode.setScale(0.5)
+        pauseNode.setScale(0.8)
         pauseNode.zPosition = 50.0
         pauseNode.name = "Pause"
         pauseNode.position = CGPoint(x: playableRect.width/2.0 - pauseNode.frame.width/2.0 - 60.0,
@@ -440,25 +502,33 @@ extension GameScene {
     func createPanel() {
         cameraNode.addChild(containerNode)
         
-        let panel = SKSpriteNode(imageNamed: "panel")
+        let panel = SKSpriteNode(imageNamed: "sign")
         panel.zPosition = 60.0
-        panel.position = .zero
+        panel.setScale(0.85)
+        panel.position = CGPoint(x: 0.0, y: -frame.height/3.2)
         containerNode.addChild(panel)
+        
+        let pauselbl = SKLabelNode(fontNamed: "PWJoyeuxNoel")
+        pauselbl.text = "Paused"
+        pauselbl.zPosition = 65.0
+        pauselbl.fontSize = 125.0
+        pauselbl.position = CGPoint(x: 0.0, y: pauselbl.frame.height*3.8)
+        panel.addChild(pauselbl)
         
         let resume = SKSpriteNode(imageNamed: "resume")
         resume.zPosition = 70.0
         resume.name = "Resume"
-        resume.setScale(0.7)
-        resume.position = CGPoint(x: -panel.frame.width/2.0 + resume.frame.width*1.5,
-                                  y: 0.0)
+        resume.setScale(1.5)
+        resume.position = CGPoint(x: -panel.frame.width/2.0 + resume.frame.width*1.2,
+                                  y: resume.frame.height)
         panel.addChild(resume)
         
         let quit = SKSpriteNode(imageNamed: "back")
         quit.zPosition = 70.0
         quit.name = "Quit"
-        quit.setScale(0.7)
-        quit.position = CGPoint(x: panel.frame.width/2.0 - quit.frame.width*1.5,
-                                  y: 0.0)
+        quit.setScale(1.5)
+        quit.position = CGPoint(x: panel.frame.width/2.0 - quit.frame.width*1.2,
+                                y: quit.frame.height)
         panel.addChild(quit)
     }
     
@@ -475,6 +545,7 @@ extension GameScene {
     
     func moveTrail() {
         trail.position.x = player.position.x
+        trail.particleSpeed = cameraMovePointPerSecond/2.5
     }
     
     func setupGameOver() {
@@ -485,8 +556,24 @@ extension GameScene {
         if(life<=0 && !gameOver) {
             gameOver = true
         }
+        
     }
+    
+    func sceneShake(shakeCount: Int, intensity: CGVector, shakeDuration: Double) {
+        let sceneView = self.scene!.view! as UIView
+        let shakeAnimation = CABasicAnimation(keyPath: "position")
+
+        shakeAnimation.duration = shakeDuration / Double(shakeCount)
+        shakeAnimation.repeatCount = Float(shakeCount)
+        shakeAnimation.autoreverses = true
+        shakeAnimation.fromValue = NSValue(cgPoint: CGPoint(x: sceneView.center.x - intensity.dx, y: sceneView.center.y - intensity.dy))
+        shakeAnimation.toValue = NSValue(cgPoint: CGPoint(x: sceneView.center.x + intensity.dx, y: sceneView.center.y + intensity.dy))
+
+        sceneView.layer.add(shakeAnimation, forKey: "position")
+      }
+    
 }
+
 
 //MARK: - SKPhysicsContactDelegate
 
@@ -504,36 +591,42 @@ extension GameScene: SKPhysicsContactDelegate {
             if (other.node?.position.y)! < 0 {
                 other.node?.position.y = 0.0
             }
-            cameraMovePointPerSecond += 100.0
+            cameraMovePointPerSecond += 50.0
             numScore-=1
             if numScore <= 0 { numScore = 0 }
             scoreLabel.text = "\(numScore)"
             run(soundCollision)
         case PhysicsCategory.Obstacle:
-            if (other.node?.position.y)! < 0 {
-                other.node?.position.y = 0.0
-            }
+            let generator = UIImpactFeedbackGenerator(style: .heavy)
+            generator.impactOccurred()
+            run(soundDamage)
+            sceneShake(shakeCount: 1, intensity: CGVector(dx: 2.5, dy: 1.5), shakeDuration: 0.2)
             setupGameOver()
         case PhysicsCategory.Coin:
             if let node = other.node {
                 node.removeFromParent()
                 numScore+=1
-                cameraMovePointPerSecond += 100.0
+                cameraMovePointPerSecond += 50.0
                 scoreLabel.text = "\(numScore)"
-                if numScore % 5 == 0 {
-//                    cameraMovePointPerSecond += 200.0
-                }
                 let highscore = ScoreGenerator.sharedInstance.getHighScore()
                 
+                ScoreGenerator.sharedInstance.setScore(numScore)
                 if numScore > highscore {
                     ScoreGenerator.sharedInstance.setHighScore(numScore)
                     ScoreGenerator.sharedInstance.setScore(numScore)
                 }
                 run(soundCoin)
             }
-            
+        case PhysicsCategory.Santa:
+            let generator = UIImpactFeedbackGenerator(style: .heavy)
+            generator.impactOccurred()
+            numScore-=1
+            if numScore <= 0 { numScore = 0 }
+            scoreLabel.text = "\(numScore)"
+            run(soundCollision)
         default:
             break
         }
     }
 }
+

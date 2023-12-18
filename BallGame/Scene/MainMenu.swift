@@ -10,7 +10,6 @@ import SpriteKit
 class MainMenu: SKScene {
     
     //MARK: - Properties
-    
     var containerNode: SKSpriteNode!
     
     //MARK: - Systems
@@ -20,6 +19,7 @@ class MainMenu: SKScene {
         setupGround()
         setupNodes()
         SKTAudio.sharedInstance().playBGMusic("backgroundMusic.mp3")
+        
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -95,54 +95,63 @@ extension MainMenu {
     }
     
     func setupNodes() {
-        let play = SKSpriteNode(imageNamed: "play")
+        let play = SKSpriteNode(imageNamed: "Gioca")
         play.name = "play"
-        play.setScale(0.8)
+        play.setScale(2.5)
         play.zPosition = 10.0
-        play.position = CGPoint(x: size.width/2.0, y: size.height/2.0 + play.frame.height + 50.0)
+        play.position = CGPoint(x: size.width/2.0, y: size.height/2.0 - play.size.height/3.0 )
         addChild(play)
         
-        let highscore = SKSpriteNode(imageNamed: "highscore")
+        let highscore = SKSpriteNode(imageNamed: "Leaderboard")
         highscore.name = "highscore"
-        highscore.setScale(0.8)
+        highscore.setScale(1.5)
         highscore.zPosition = 10.0
-        highscore.position = CGPoint(x: size.width/2.0, y: size.height/2.0 )
+        highscore.position = CGPoint(x: size.width/2.0 - 2*highscore.size.width - 50.0, y: size.height/2.0 - highscore.size.height/2.0 )
         addChild(highscore)
         
-        let setting = SKSpriteNode(imageNamed: "setting")
+        let setting = SKSpriteNode(imageNamed: "Setting")
         setting.name = "setting"
-        setting.setScale(0.8)
+        setting.setScale(1.5)
         setting.zPosition = 10.0
-        setting.position = CGPoint(x: size.width/2.0, y: size.height/2.0 - setting.size.height - 50.0)
+        setting.position = CGPoint(x: size.width/2.0 + 2*setting.size.width + 50.0, y: size.height/2.0 - setting.size.height/2.0)
         addChild(setting)
+        
+        let title = SKSpriteNode(imageNamed: "titolo")
+        title.name = "titolo"
+        title.setScale(2.0)
+        title.zPosition = 10.0
+        title.position = CGPoint(x: size.width/2.0, y: size.height/2.0 + title.frame.height/1.2)
+        addChild(title)
     }
     
     func setupPanel() {
         setupContainer()
         
-        let panel = SKSpriteNode(imageNamed: "panel")
-        panel.setScale(1.5)
+        let panel = SKSpriteNode(imageNamed: "sign")
+        panel.setScale(0.85)
         panel.zPosition = 20.0
-        panel.position = .zero
+        panel.position = CGPoint(x: 0.0, y: -frame.height/3.2)
         containerNode.addChild(panel)
         
         //Highscore
-        let x = -panel.frame.width/2.0 + 250.0
-        let highscorelbl = SKLabelNode(fontNamed: "Krungthep")
+        let x = -panel.frame.width/2.0 + 100.0
+        let highscorelbl = SKLabelNode(fontNamed: "PWJoyeuxNoel")
+        highscorelbl.fontName = "PWJoyeuxNoel"
         highscorelbl.text = "Highscore: \(ScoreGenerator.sharedInstance.getHighScore())"
         highscorelbl.horizontalAlignmentMode = .left
-        highscorelbl.fontSize = 80.0
+        highscorelbl.fontSize = 125.0
         highscorelbl.zPosition = 25.0
-        highscorelbl.position = CGPoint(x: x, y: highscorelbl.frame.height/2.0 - 30.0)
+        highscorelbl.position = CGPoint(x: x, y: highscorelbl.frame.height*3.0 )
         panel.addChild(highscorelbl)
         
         
-        let scorelbl = SKLabelNode(fontNamed: "Krungthep" )
+        let scorelbl = SKLabelNode(fontNamed: "PWJoyeuxNoel")
+        scorelbl.fontName = "PWJoyeuxNoel"
         scorelbl.text = "Score: \(ScoreGenerator.sharedInstance.getScore())"
         scorelbl.horizontalAlignmentMode = .left
-        scorelbl.fontSize = 80.0
+        scorelbl.fontSize = 125.0
         scorelbl.zPosition = 25.0
-        scorelbl.position = CGPoint(x: x, y: -scorelbl.frame.height - 30.0)
+        scorelbl.position = CGPoint(x: x, y: scorelbl.frame.height*1.5)
         panel.addChild(scorelbl)
     }
     
@@ -160,26 +169,28 @@ extension MainMenu {
         setupContainer()
         
         //Panel
-        let panel = SKSpriteNode(imageNamed: "panel")
-        panel.setScale(1.5)
+        let panel = SKSpriteNode(imageNamed: "sign")
+        panel.setScale(0.85)
         panel.zPosition = 20.0
-        panel.position = .zero
+        panel.position = CGPoint(x: 0.0, y: -frame.height/3.2)
         containerNode.addChild(panel)
         
         //Music
         let music = SKSpriteNode(imageNamed: SKTAudio.musicEnabled ? "musicOn" : "musicOff")
         music.name = "music"
-        music.setScale(0.7)
+        music.setScale(1.5)
         music.zPosition = 25.0
-        music.position = CGPoint(x: -music.frame.width - 50.0, y: 0.0)
+        music.position = CGPoint(x: -panel.frame.width/2.0 + music.frame.width*2.5,
+                                 y: music.frame.height)
         panel.addChild(music)
         
         //Sound
         let effect = SKSpriteNode(imageNamed: effectEnabled ? "effectOn" : "effectOff")
         effect.name = "effect"
-        effect.setScale(0.7)
+        effect.setScale(1.5)
         effect.zPosition = 25.0
-        effect.position = CGPoint(x: music.frame.width + 50.0, y: 0.0)
+        effect.position = CGPoint(x: panel.frame.width/2.0 - effect.frame.width*2.5,
+                                  y: effect.frame.height)
         panel.addChild(effect)
     }
 }
