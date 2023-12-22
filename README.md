@@ -27,5 +27,6 @@ BallGame is a Game for iOS developed with SpriteKit in just 2 weeks!
 ## Credits
 
 Game developed by https://github.com/T0nyAbb and https://github.com/Bartolomeo2k3 
+
 Graphical assets made by https://github.com/SkyRed003 and https://github.com/ciarax22
 
